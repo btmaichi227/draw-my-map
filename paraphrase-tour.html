@@ -1,0 +1,454 @@
+<title>Paraphrase Tour</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one narrow column, phone-first. Home = map choice; Write = strategy box, map picker, sentence cards; Read = one big sentence at a time. */
+:root{
+  --paper:#EEF2EE; --surface:#FFFFFF; --ink:#16231E; --muted:#56655F; --line:#C5D0CA;
+  --grass:#CFE2C3; --tree:#9CC28C; --water:#A8D2E5; --path:#F5ECD6; --floor:#E7ECF1; --hall:#D9E1E8; --wall:#2A3934;
+  --bldg:#FFFFFF; --accent:#E9A51A; --accent-ink:#2A1C00; --accent-soft:#FBE7B8;
+  --ok:#23835A; --ok-soft:#D4EEDF; --bad:#C1402B; --bad-soft:#F6D8D1;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#111815; --surface:#18211D; --ink:#E4ECE7; --muted:#9BABA4; --line:#2E3B36;
+  --grass:#22362A; --tree:#2F4D38; --water:#1D3C4B; --path:#3A3527; --floor:#1C252B; --hall:#25313A; --wall:#B9C7C1;
+  --bldg:#1B2420; --accent:#F0B43A; --accent-ink:#1E1400; --accent-soft:#4A3A12;
+  --ok:#5CC28F; --ok-soft:#173A29; --bad:#EE7A64; --bad-soft:#47201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111815; --surface:#18211D; --ink:#E4ECE7; --muted:#9BABA4; --line:#2E3B36;
+  --grass:#22362A; --tree:#2F4D38; --water:#1D3C4B; --path:#3A3527; --floor:#1C252B; --hall:#25313A; --wall:#B9C7C1;
+  --bldg:#1B2420; --accent:#F0B43A; --accent-ink:#1E1400; --accent-soft:#4A3A12;
+  --ok:#5CC28F; --ok-soft:#173A29; --bad:#EE7A64; --bad-soft:#47201A; color-scheme:dark}
+
+body{background:var(--paper);color:var(--ink);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:480px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,label:focus-within,.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Home */
+.eyebrow{font:600 12px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.title{font-size:clamp(44px,13vw,64px);font-weight:800;font-stretch:72%;line-height:.9;letter-spacing:-.01em;text-transform:uppercase;margin-top:8px}
+.title span{display:inline-block;border-bottom:5px dashed var(--accent);padding-bottom:2px}
+.lede{color:var(--muted);margin-top:12px;max-width:40ch}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+legend{font:700 13px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{position:relative;display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;cursor:pointer;min-width:0}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt b{font:700 17px/1.15 var(--display)}
+.opt small{color:var(--muted);font-size:13px;line-height:1.3}
+.opt:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);background:var(--accent-soft)}
+.opt svg{width:100%;height:auto;border-radius:6px;margin-bottom:6px;display:block}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{position:relative;flex:1;min-width:56px;text-align:center;padding:10px 0;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;font:700 16px var(--display);font-variant-numeric:tabular-nums;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){border-color:var(--ink);background:var(--accent-soft)}
+.how{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:16px}
+.how h2{font-size:18px;margin-bottom:8px}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.how li::marker{font-family:var(--display);font-weight:700}
+.go{width:100%;padding:16px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:800 20px var(--display);letter-spacing:.02em}
+.go:active{transform:translateY(1px)}
+
+/* Game */
+.bar{display:flex;align-items:center;gap:12px}
+.back{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font:600 14px var(--display);flex:none}
+.bar .who{min-width:0}
+.bar h2{font-size:20px;line-height:1.1}
+.role{font:600 13px/1.2 var(--display);color:var(--muted)}
+.timer{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
+.clock{font:800 30px/1 var(--display);font-variant-numeric:tabular-nums;font-stretch:90%;flex:1}
+.timer button{border:1.5px solid var(--ink);background:var(--bldg);border-radius:8px;padding:8px 14px;font:700 15px var(--display)}
+.timer .tstart{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.timer.up{border-color:var(--bad);background:var(--bad-soft)}
+.timer.up .clock{color:var(--bad)}
+.note{font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+
+.map{position:relative;width:100%;border-radius:8px;overflow:hidden;border:1.5px solid var(--line);background:var(--grass)}
+.map.museum{background:var(--paper)}
+.map svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.map svg.top{pointer-events:none}
+.grass{fill:var(--grass)} .water{fill:var(--water)} .trees circle{fill:var(--tree)}
+.paths{stroke:var(--path)} .bridge{fill:var(--path)} .rail{stroke:var(--ink);stroke-width:1.2;fill:none;opacity:.6}
+.floor{fill:var(--floor);stroke:var(--wall);stroke-width:4}
+.hall{fill:var(--hall);stroke:var(--wall);stroke-width:2}
+.given{fill:var(--hall);stroke:var(--wall);stroke-width:1.5}
+.thin{stroke:var(--wall);stroke-width:1;fill:none;opacity:.7}
+.gap rect,.door{fill:var(--floor)}
+.paperfill{fill:var(--paper)}
+.lbl{font:600 10px var(--display);fill:var(--ink);opacity:.8}
+.lbl.sm{font-size:9px}
+.compass circle{fill:var(--bldg);stroke:var(--ink);stroke-width:1.2}
+.compass path{fill:var(--ink)}
+.compass text{font:800 9px var(--display);fill:var(--ink)}
+
+.slot{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;padding:2px;
+  background:var(--bldg);border:1.5px solid var(--ink);border-radius:3px;color:var(--ink);overflow:hidden;
+  font:600 clamp(9px,2.75vw,12.5px)/1.08 var(--display);font-stretch:88%;overflow-wrap:anywhere}
+.museum .slot{border-radius:0;border:2px solid var(--wall)}
+button.slot{cursor:pointer}
+.slot.filled{background:var(--accent-soft)}
+.targeting button.slot:not(.filled){box-shadow:inset 0 0 0 2px var(--accent)}
+.slot.ok{background:var(--ok-soft);border-color:var(--ok)}
+.slot.bad{background:var(--bad-soft);border-color:var(--bad)}
+.slot .was{text-decoration:line-through;opacity:.75;font-weight:500}
+.slot .fix{color:var(--ok);font-weight:800}
+.slot .tag{font-size:.82em;font-weight:500;opacity:.8}
+
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:16px}
+.tray{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--ink);background:var(--bldg);border-radius:999px;padding:8px 13px;font:600 15px/1.1 var(--display)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.count{font:700 14px var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{flex:1;min-width:130px;padding:12px;border-radius:9px;border:1.5px solid var(--ink);background:var(--bldg);font:700 16px var(--display)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.confirm{background:var(--accent-soft);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.score{display:flex;align-items:baseline;gap:12px}
+.score strong{font:800 52px/1 var(--display);font-variant-numeric:tabular-nums}
+.score span{color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1.5px solid}
+details.phr{background:var(--surface);border:1.5px solid var(--line);border-radius:10px}
+details.phr summary{padding:12px 14px;font:700 16px var(--display);cursor:pointer}
+.phr .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;padding:0 14px 14px}
+.phr h4{grid-column:1/-1;margin:8px 0 0;font:700 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.phr p{font-size:14px;line-height:1.35}
+.hint{min-height:1.4em;font-size:14px;color:var(--muted)}
+@media (max-width:380px){.phr .cols{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.slot.pick{cursor:pointer}
+.slot.decoy{opacity:.55}
+.slot.on{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.slot.hit{background:var(--accent);color:var(--accent-ink)}
+.badge{position:absolute;top:2px;left:2px;min-width:18px;height:18px;border-radius:9px;background:var(--ink);color:var(--paper);font:800 11px/18px var(--display);text-align:center;padding:0 4px}
+.strat{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.strat h3{font-size:16px}
+.strat ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.model{border-left:4px solid var(--accent);padding:6px 0 6px 12px;font-size:15px}
+.model em{font-style:normal;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+.items{display:flex;flex-direction:column;gap:12px}
+.item{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.item.badword{border-color:var(--bad)}
+.item.good{border-color:var(--ok)}
+.item .ih{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.item .ih b{font:700 16px var(--display)}
+.item .ban{font-size:13px;color:var(--muted)}
+.item .ban s{color:var(--bad);text-decoration:none;font-weight:700}
+.item textarea{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;border:1.5px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:16px/1.4 var(--body);padding:8px 10px}
+.item textarea:focus{outline:3px solid var(--accent);outline-offset:1px}
+.item .warn{font-size:14px;min-height:1.2em}
+.item.badword .warn{color:var(--bad)}
+.item.good .warn{color:var(--ok)}
+.rm{border:0;background:none;color:var(--muted);font:600 13px var(--display);text-decoration:underline;padding:0}
+.starters{display:flex;flex-wrap:wrap;gap:6px}
+.starters button{border:1px dashed var(--muted);background:transparent;border-radius:999px;padding:4px 10px;font:500 13px var(--body)}
+.read{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;display:flex;flex-direction:column;gap:14px}
+.read .num{font:700 13px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.read .sent{font:500 22px/1.4 var(--body)}
+.read .ans{font:800 26px/1.1 var(--display);font-stretch:85%}
+.dots{display:flex;gap:6px}
+.dots i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--ink)}
+.dots i.y{background:var(--ok);border-color:var(--ok)}
+.dots i.n{background:var(--bad);border-color:var(--bad)}
+.recap{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.recap li{border-bottom:1px solid var(--line);padding-bottom:8px;font-size:15px}
+.recap li b{font-family:var(--display)}
+.mapbtns{display:flex;flex-direction:column;gap:10px}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+const MAPS = {
+  park: {
+    name: "Riverside Park", kind: "Outdoor", W: 360, H: 480,
+    landmarks: "Lake, Bridge, River, North gate, West gate, Main entrance",
+    base: `
+      <rect class="grass" width="360" height="480"/>
+      <path class="water" d="M318 0 C306 90 328 160 316 240 C304 320 328 400 318 480 L360 480 L360 0 Z"/>
+      <g class="paths" fill="none" stroke-width="14">
+        <ellipse cx="150" cy="215" rx="72" ry="56"/>
+        <path d="M150 480 V271 M150 159 V0 M78 215 H0 M222 215 H316"/>
+      </g>
+      <ellipse class="water" cx="150" cy="215" rx="50" ry="34"/>
+      <rect class="bridge" x="306" y="206" width="54" height="18"/>
+      <path class="rail" d="M306 206 H360 M306 224 H360"/>
+      <g class="trees"><circle cx="60" cy="114" r="7"/><circle cx="96" cy="120" r="5"/><circle cx="205" cy="114" r="6"/><circle cx="104" cy="390" r="5"/><circle cx="24" cy="303" r="6"/><circle cx="212" cy="294" r="5"/><circle cx="268" cy="112" r="6"/><circle cx="290" cy="392" r="5"/></g>
+      <text class="lbl" x="150" y="219" text-anchor="middle">Lake</text>
+      <text class="lbl sm" x="161" y="11">North gate</text>
+      <text class="lbl sm" x="4" y="204">West gate</text>
+      <text class="lbl sm" x="333" y="200" text-anchor="middle">Bridge</text>
+      <text class="lbl sm" x="161" y="474">Main entrance</text>
+      <text class="lbl" transform="translate(343 330) rotate(-90)" text-anchor="middle">River</text>
+      <g class="compass" transform="translate(278 64)"><circle r="15"/><path d="M0 -12 L4 0 L0 4 L-4 0Z"/><text y="-19" text-anchor="middle">N</text></g>`,
+    top: "",
+    slots: [
+      {id:"p1", x:20, y:410, w:110, h:50, a:"Car park"},
+      {id:"p2", x:168, y:410, w:64, h:50, a:"Visitor centre"},
+      {id:"p3", x:40, y:320, w:90, h:48, a:"Toilets"},
+      {id:"p4", x:168, y:320, w:70, h:48, a:"Playground"},
+      {id:"p5", x:10, y:140, w:64, h:52, a:"Picnic area"},
+      {id:"p6", x:10, y:238, w:64, h:52, a:null},
+      {id:"p7", x:20, y:30, w:100, h:60, a:"Tennis courts"},
+      {id:"p8", x:172, y:30, w:72, h:60, a:"Rose garden"},
+      {id:"p9", x:232, y:140, w:70, h:50, a:null},
+      {id:"p10", x:232, y:236, w:70, h:50, a:"Boathouse"},
+      {id:"p11", x:246, y:310, w:58, h:58, a:"Bike hire"},
+      {id:"p12", x:240, y:410, w:62, h:50, a:"Café"}
+    ]
+  },
+  museum: {
+    name: "City Museum", kind: "Indoor", W: 360, H: 510,
+    landmarks: "Main hall, Entrance hall, Stairs, Lift, Main entrance",
+    base: `
+      <rect class="floor" x="8" y="12" width="344" height="452"/>
+      <rect class="hall" x="128" y="130" width="104" height="160"/>
+      <g class="gap"><rect x="125" y="200" width="6" height="20"/><rect x="229" y="200" width="6" height="20"/><rect x="170" y="127" width="20" height="6"/><rect x="170" y="287" width="20" height="6"/></g>
+      <rect class="given" x="114" y="306" width="48" height="46"/>
+      <path class="thin" d="M114 315 H162 M114 324 H162 M114 333 H162 M114 342 H162"/>
+      <rect class="given" x="198" y="306" width="48" height="46"/>
+      <path class="thin" d="M198 306 L246 352 M246 306 L198 352"/>
+      <rect class="hall" x="128" y="376" width="104" height="88"/>
+      <g class="gap"><rect x="170" y="373" width="20" height="6"/></g>
+      <rect class="paperfill" x="160" y="459" width="40" height="10"/>
+      <text class="lbl" x="180" y="214" text-anchor="middle">Main hall</text>
+      <text class="lbl" x="180" y="424" text-anchor="middle">Entrance hall</text>
+      <text class="lbl sm" x="138" y="368" text-anchor="middle">Stairs</text>
+      <text class="lbl sm" x="222" y="368" text-anchor="middle">Lift</text>
+      <text class="lbl" x="180" y="488" text-anchor="middle">Main entrance</text>
+      <g class="compass" transform="translate(330 490)"><circle r="12"/><path d="M0 -10 L3.5 0 L0 3 L-3.5 0Z"/><text y="-15" text-anchor="middle">N</text></g>`,
+    top: `
+      <g class="doorset">
+        <rect class="door" x="103" y="49" width="5" height="18"/><rect class="door" x="103" y="133" width="5" height="18"/><rect class="door" x="103" y="217" width="5" height="18"/><rect class="door" x="103" y="301" width="5" height="18"/><rect class="door" x="103" y="399" width="5" height="18"/>
+        <rect class="door" x="252" y="49" width="5" height="18"/><rect class="door" x="252" y="133" width="5" height="18"/><rect class="door" x="252" y="217" width="5" height="18"/><rect class="door" x="252" y="301" width="5" height="18"/><rect class="door" x="252" y="399" width="5" height="18"/>
+        <rect class="door" x="134" y="89" width="18" height="5"/><rect class="door" x="208" y="89" width="18" height="5"/>
+      </g>`,
+    slots: [
+      {id:"m1", x:12, y:16, w:94, h:84, a:"Art gallery"},
+      {id:"m2", x:12, y:100, w:94, h:84, a:null},
+      {id:"m3", x:12, y:184, w:94, h:84, a:"Lecture room"},
+      {id:"m4", x:12, y:268, w:94, h:84, a:"Cloakroom"},
+      {id:"m5", x:12, y:352, w:94, h:112, a:"Ticket office"},
+      {id:"m6", x:254, y:16, w:94, h:84, a:"Dinosaur gallery"},
+      {id:"m7", x:254, y:100, w:94, h:84, a:"Children's room"},
+      {id:"m8", x:254, y:184, w:94, h:84, a:null},
+      {id:"m9", x:254, y:268, w:94, h:84, a:"Toilets"},
+      {id:"m10", x:254, y:352, w:94, h:112, a:"Gift shop"},
+      {id:"m11", x:106, y:16, w:74, h:76, a:"Ancient Egypt room"},
+      {id:"m12", x:180, y:16, w:74, h:76, a:"Café"}
+    ]
+  }
+};
+
+
+const S = { screen:"home", map:"park", picks:[], by:{}, text:{}, i:0, res:[], reveal:false, hit:null };
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const other = m => m === "park" ? "museum" : "park";
+const slotOf = (m, id) => MAPS[m].slots.find(s => s.id === id);
+const KEY = "paraphrase-tour-v1";
+
+function save(){ try{ S.by[S.map]=S.picks; localStorage.setItem(KEY, JSON.stringify({map:S.map, by:S.by, text:S.text})); }catch(e){} }
+function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && MAPS[d.map]){ S.map = d.map; S.by = d.by || {}; S.picks = S.by[S.map] || []; S.text = d.text || {}; } }catch(e){} }
+
+/* banned-word check */
+const norm = w => w.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/['’]s$/, "");
+const words = t => (t.match(/[A-Za-zÀ-ÿ'’]+/g) || []).map(norm).filter(Boolean);
+const EXTRA = {"Boathouse":["boat","house"], "Playground":["play","ground"], "Cloakroom":["cloak"]};
+const bannedOf = label => [...new Set([...words(label), ...(EXTRA[label] || [])])];
+function used(label, text){
+  const ban = bannedOf(label), toks = words(text), hit = new Set();
+  for (const t of toks) for (const b of ban){
+    if (t === b || t === b + "s" || t === b + "es" || (b.endsWith("s") && t === b.slice(0, -1))) hit.add(b);
+  }
+  return [...hit];
+}
+function itemState(id){
+  const lab = slotOf(S.map, id).a, txt = (S.text[id] || "").trim();
+  if (!txt) return {ok:false, msg:""};
+  const u = used(lab, txt);
+  if (u.length) return {ok:false, bad:true, msg:`Remove: ${u.join(", ")}`};
+  if (txt.split(/\s+/).length < 6) return {ok:false, msg:"Add more detail: say what it is and where it is."};
+  return {ok:true, msg:"Good. No words from the name."};
+}
+
+/* map */
+function mapHTML(m, mode){
+  const M = MAPS[m];
+  const pos = s => `left:${s.x/M.W*100}%;top:${s.y/M.H*100}%;width:${s.w/M.W*100}%;height:${s.h/M.H*100}%`;
+  const slots = M.slots.map(s => {
+    if (mode === "pick"){
+      if (!s.a) return `<div class="slot decoy" style="${pos(s)}"></div>`;
+      const n = S.picks.indexOf(s.id);
+      return `<button class="slot pick ${n>-1?"on":""}" data-pick="${s.id}" style="${pos(s)}" aria-pressed="${n>-1}">${n>-1?`<span class="badge">${n+1}</span>`:""}${esc(s.a)}</button>`;
+    }
+    if (mode === "listen") return `<button class="slot pick ${S.hit===s.id?"hit":""}" data-hit="${s.id}" style="${pos(s)}">${s.a?esc(s.a):""}</button>`;
+    return `<div class="slot ${mode===s.id?"hit":""}" style="${pos(s)}">${s.a?esc(s.a):""}</div>`;
+  }).join("");
+  return `<div class="map ${m}" style="aspect-ratio:${M.W}/${M.H}">
+    <svg viewBox="0 0 ${M.W} ${M.H}" aria-hidden="true">${M.base}</svg>${slots}
+    <svg class="top" viewBox="0 0 ${M.W} ${M.H}" aria-hidden="true">${M.top}</svg></div>`;
+}
+const bar = (title, sub) => `<div class="bar"><button class="back" id="back">← Menu</button><div class="who"><h2>${title}</h2><p class="role">${sub}</p></div></div>`;
+function go(screen){ S.screen = screen; render(); window.scrollTo(0,0); }
+function render(){ ({home, write, read, listen, done})[S.screen](); }
+
+/* home */
+function home(){
+  app.innerHTML = `
+    <header>
+      <p class="eyebrow">IELTS Listening · Paraphrasing</p>
+      <h1 class="title">Paraphrase <span>Tour</span></h1>
+      <p class="lede">Describe 5 places without saying their names. Your partner listens and finds them on the map.</p>
+    </header>
+    <fieldset>
+      <legend>1 · Choose your map</legend>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="map" id="map-park" value="park" ${S.map==="park"?"checked":""}><b>Riverside Park</b><small>Outdoor</small></label>
+        <label class="opt"><input type="radio" name="map" id="map-museum" value="museum" ${S.map==="museum"?"checked":""}><b>City Museum</b><small>Indoor</small></label>
+      </div>
+      <p class="note">Your partner chooses the <b>other</b> map.</p>
+    </fieldset>
+    <section class="how">
+      <h2>How to play</h2>
+      <ol>
+        <li><b>Write.</b> Tap 5 places on your map. Write one sentence for each. Say what the place is for and where it is. Don't use any word from its name.</li>
+        <li><b>Read.</b> Read each sentence aloud twice. Your partner opens your map and says the place.</li>
+        <li><b>Score.</b> Each correct answer is 1 point for both of you. Then swap.</li>
+      </ol>
+    </section>
+    <div class="mapbtns">
+      <button class="go" id="w">Write my tour</button>
+      <button class="btn" id="l">Listen: open my partner's map</button>
+    </div>`;
+  app.querySelectorAll('input[name="map"]').forEach(i => i.onchange = () => {
+    if (i.value !== S.map){ S.by[S.map] = S.picks; S.map = i.value; S.picks = S.by[S.map] || []; save(); }
+  });
+  document.getElementById("w").onclick = () => go("write");
+  document.getElementById("l").onclick = () => { S.hit = null; go("listen"); };
+}
+
+/* write */
+const STARTERS = ["This is the place where you can …", "You'll find somewhere to …", "Right across from the …,", "Just past the … on your left,", "In the north-east corner,", "If you need to …, go to"];
+function write(){
+  const M = MAPS[S.map];
+  app.innerHTML = `${bar(M.name, "Write your tour")}
+    <section class="strat">
+      <h3>How to paraphrase</h3>
+      <ul>
+        <li>Say <b>what people do there</b>: the place where…, somewhere to…</li>
+        <li>Use a <b>synonym</b>: gifts → souvenirs, toilets → facilities</li>
+        <li>Say the <b>position another way</b>: opposite → across from</li>
+      </ul>
+      <p class="model">Gift shop → “Just past the entrance on the right, you'll find <em>somewhere to buy souvenirs</em>.”</p>
+    </section>
+    <p class="note">Tap <b>5 places</b> on the map. Tap again to remove one.</p>
+    ${mapHTML(S.map, "pick")}
+    <div class="items">${S.picks.map((id, n) => {
+      const lab = slotOf(S.map, id).a, st = itemState(id);
+      return `<div class="item ${st.bad?"badword":st.ok?"good":""}" data-item="${id}">
+        <div class="ih"><b>${n+1} · ${esc(lab)}</b><button class="rm" data-rm="${id}">Remove</button></div>
+        <p class="ban">Don't use: ${bannedOf(lab).map(w => `<s>${esc(w)}</s>`).join(", ")}</p>
+        <div class="starters">${STARTERS.map((t, k) => `<button data-st="${k}" data-for="${id}">${esc(t)}</button>`).join("")}</div>
+        <textarea id="t-${id}" data-txt="${id}" placeholder="Write your sentence…" rows="3">${esc(S.text[id] || "")}</textarea>
+        <p class="warn" aria-live="polite">${esc(st.msg)}</p>
+      </div>`;
+    }).join("")}</div>
+    <p class="hint" id="need"></p>
+    <button class="go" id="ready">Start reading</button>`;
+  document.getElementById("back").onclick = () => go("home");
+  app.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => togglePick(b.dataset.pick));
+  app.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => togglePick(b.dataset.rm));
+  app.querySelectorAll("[data-txt]").forEach(t => t.oninput = () => { S.text[t.dataset.txt] = t.value; save(); paintItem(t.dataset.txt); updateReady(); });
+  app.querySelectorAll("[data-st]").forEach(b => b.onclick = () => {
+    const ta = document.getElementById("t-" + b.dataset.for), add = STARTERS[+b.dataset.st];
+    ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + add;
+    ta.dispatchEvent(new Event("input")); ta.focus();
+    const p = ta.value.indexOf("…"); if (p > -1) ta.setSelectionRange(p, p + 1);
+  });
+  document.getElementById("ready").onclick = () => { if (readyState().ok){ S.i = 0; S.res = []; S.reveal = false; go("read"); } };
+  updateReady();
+}
+function togglePick(id){
+  const n = S.picks.indexOf(id);
+  if (n > -1) S.picks.splice(n, 1);
+  else if (S.picks.length < 5) S.picks.push(id);
+  else { const h = document.getElementById("need"); if (h) h.textContent = "You already have 5 places. Remove one first."; return; }
+  save(); const y = window.scrollY; write(); window.scrollTo(0, y);
+}
+function paintItem(id){
+  const el = app.querySelector(`[data-item="${id}"]`), st = itemState(id);
+  el.classList.toggle("badword", !!st.bad); el.classList.toggle("good", st.ok);
+  el.querySelector(".warn").textContent = st.msg;
+}
+function readyState(){
+  if (S.picks.length < 5) return {ok:false, msg:`Choose ${5 - S.picks.length} more place${5 - S.picks.length > 1 ? "s" : ""} on the map.`};
+  const notOk = S.picks.filter(id => !itemState(id).ok).length;
+  if (notOk) return {ok:false, msg:`Finish or fix ${notOk} sentence${notOk > 1 ? "s" : ""}.`};
+  return {ok:true, msg:"All 5 sentences are ready."};
+}
+function updateReady(){
+  const r = readyState(), b = document.getElementById("ready"), h = document.getElementById("need");
+  b.disabled = !r.ok; b.style.opacity = r.ok ? 1 : .45; h.textContent = r.msg;
+}
+
+/* read */
+function read(){
+  const M = MAPS[S.map], id = S.picks[S.i], lab = slotOf(S.map, id).a;
+  app.innerHTML = `${bar(M.name, "Read your tour")}
+    <div class="dots">${S.picks.map((_, k) => `<i class="${S.res[k]===true?"y":S.res[k]===false?"n":""}"></i>`).join("")}</div>
+    <section class="read">
+      <p class="num">Sentence ${S.i + 1} of 5 · read it twice</p>
+      <p class="sent">${esc(S.text[id])}</p>
+      ${S.reveal ? `<p class="ans">${esc(lab)}</p>
+        <div class="row"><button class="btn" id="no">Not quite</button><button class="btn primary" id="yes">My partner was right</button></div>`
+      : `<p class="note">Wait for your partner to say a place. Then show the answer.</p>
+        <button class="btn primary" id="show">Show answer</button>`}
+    </section>
+    ${S.reveal ? mapHTML(S.map, id) : ""}`;
+  document.getElementById("back").onclick = () => go("home");
+  const on = (x, f) => { const e = document.getElementById(x); if (e) e.onclick = f; };
+  on("show", () => { S.reveal = true; read(); });
+  const next = ok => { S.res[S.i] = ok; S.reveal = false; if (S.i < 4){ S.i++; go("read"); } else go("done"); };
+  on("yes", () => next(true)); on("no", () => next(false));
+}
+function done(){
+  const M = MAPS[S.map], score = S.res.filter(Boolean).length;
+  app.innerHTML = `${bar(M.name, "Results")}
+    <section class="panel">
+      <div class="score"><strong>${score}/5</strong><span>${score === 5 ? "Clear paraphrases and great listening." : score >= 3 ? "Good. Look at the ones your partner missed." : "Talk together: which words were confusing?"}</span></div>
+      <ol class="recap">${S.picks.map((id, k) => `<li><b>${S.res[k] ? "✓" : "✗"} ${esc(slotOf(S.map, id).a)}</b><br>${esc(S.text[id])}</li>`).join("")}</ol>
+      <div class="row">
+        <button class="btn" id="edit">Edit my sentences</button>
+        <button class="btn primary" id="swap">Swap: listen to my partner</button>
+      </div>
+    </section>`;
+  document.getElementById("back").onclick = () => go("home");
+  document.getElementById("edit").onclick = () => go("write");
+  document.getElementById("swap").onclick = () => { S.hit = null; go("listen"); };
+}
+
+/* listen */
+function listen(){
+  const m = other(S.map), M = MAPS[m];
+  app.innerHTML = `${bar(M.name, "Listen to your partner")}
+    <p class="note">This is your partner's map. Listen to each sentence and <b>say the name of the place</b>. You can tap a building to point to it.</p>
+    ${mapHTML(m, "listen")}
+    <button class="btn" id="mine">Back to my tour</button>`;
+  document.getElementById("back").onclick = () => go("home");
+  document.getElementById("mine").onclick = () => go(S.picks.length ? "write" : "home");
+  app.querySelectorAll("[data-hit]").forEach(b => b.onclick = () => { S.hit = S.hit === b.dataset.hit ? null : b.dataset.hit; const y = window.scrollY; listen(); window.scrollTo(0, y); });
+}
+
+load();
+render();
+</script>
